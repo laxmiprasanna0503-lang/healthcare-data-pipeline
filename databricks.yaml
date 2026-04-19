@@ -1,0 +1,80 @@
+bundle:
+  name: healthcare_project
+
+variables:
+  warehouse_id:
+    default: d1b8c63cce82bafd
+
+  catalog:
+    default: healthcare
+
+  schema:
+    default: ${workspace.current_user.short_name}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-dea332db-27ac.cloud.databricks.com
+
+resources:
+  jobs:
+    healthcare_pipeline:
+      name: healthcare-pipeline
+
+      tasks:
+
+        - task_key: healthcare_bronze
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/healthcare_bronze.sql
+
+        - task_key: silver_patients
+          depends_on:
+            - task_key: healthcare_bronze
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/silver_patients.sql
+
+        - task_key: silver_admissions
+          depends_on:
+            - task_key: silver_patients
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/silver_admissions.sql
+
+        - task_key: silver_lab_results
+          depends_on:
+            - task_key: silver_admissions
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/silver_lab_results.sql
+
+        - task_key: gold_riskscore
+          depends_on:
+            - task_key: silver_lab_results
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/gold_riskscore.sql
+
+        # - task_key: gold_hospital_analytics
+        #   depends_on:
+        #     - task_key: gold_riskscore
+        #   spark_sql_task:
+        #     warehouse_id: ${var.warehouse_id}
+        #     file:
+        #       path: ./notebooks/gold_hospital_analytics.sql
+
+        - task_key: gold_hospital_analytics
+          depends_on:
+              - task_key: gold_riskscore
+          sql_task:
+            warehouse_id: ${var.warehouse_id}
+            file:
+              path: ./notebooks/gold_hospital_analytics.sql
