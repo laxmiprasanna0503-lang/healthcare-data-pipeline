@@ -1,0 +1,33 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+- group: databricks-secrets
+
+steps:
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10'
+
+- script: |
+    pip install databricks-cli
+    pip install databricks-bundle
+  displayName: Install dependencies
+
+- script: |
+    databricks bundle validate
+  env:
+    DATABRICKS_HOST: $(DATABRICKS_HOST)
+    DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+  displayName: Validate Bundle
+
+- script: |
+    databricks bundle deploy
+  env:
+    DATABRICKS_HOST: $(DATABRICKS_HOST)
+    DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+  displayName: Deploy Bundle
