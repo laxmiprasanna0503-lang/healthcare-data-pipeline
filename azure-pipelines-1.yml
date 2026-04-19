@@ -1,0 +1,15 @@
+steps:
+
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.10'
+
+- script: |
+    pip install databricks-cli
+    pip install databricks-bundle
+
+- script: |
+    databricks bundle validate
+  env:
+    DATABRICKS_HOST: $(DATABRICKS_HOST)
+    DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
